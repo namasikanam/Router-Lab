@@ -3,13 +3,8 @@
 #include <stdlib.h>
 #include <arpa/inet.h>
 #include <bits/stdc++.h>
+#include "utility.h"
 using namespace std;
-
-void out(unsigned x, int n)
-{
-    while (n--)
-        putchar('0' ^ x >> n & 1);
-}
 
 /*
   在头文件 rip.h 中定义了如下的结构体：

@@ -20,10 +20,14 @@ uint8_t output[2048];
 // 2: 10.0.2.1
 // 3: 10.0.3.1
 // 你可以按需进行修改，注意端序
-in_addr_t addrs[N_IFACE_ON_BOARD] = {0x0100000a, 0x0101000a, 0x0102000a,
-                                     0x0103000a};
+in_addr_t addrs[N_IFACE_ON_BOARD];
 
 int main(int argc, char *argv[]) {
+  // TODO: what values are [addrs] to initialize.
+  // Initialize [addrs]
+  for (int i = 0; i < N_IFACE_ON_BOARD; ++i)
+    addrs[i] = 0x0100000a + 0x10000 * i;
+
   // 0a.
   int res = HAL_Init(1, addrs);
   if (res < 0) {

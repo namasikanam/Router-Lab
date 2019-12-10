@@ -1,18 +1,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <cstdio>
-
-uint8_t reverse(uint8_t b)
-{
-    b = (b & 0xF0) >> 4 | (b & 0x0F) << 4;
-    b = (b & 0xCC) >> 2 | (b & 0x33) << 2;
-    b = (b & 0xAA) >> 1 | (b & 0x55) << 1;
-    return b;
-}
-int getData(uint8_t *packet, size_t index)
-{
-    return (int)packet[index + 1] << 8 | (int)packet[index];
-}
+#include "utility.h"
 
 /**
  * @brief 进行 IP 头的校验和的验证

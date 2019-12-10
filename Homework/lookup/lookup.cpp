@@ -3,13 +3,8 @@
 #include <stdlib.h>
 #include <bits/stdc++.h>
 #include <arpa/inet.h>
+#include "utility.h"
 using namespace std;
-
-void output(uint32_t x)
-{
-    for (int i = 32; i--;)
-        putchar('0' ^ x >> i & 1);
-}
 
 /*
   RoutingTable Entry 的定义如下：

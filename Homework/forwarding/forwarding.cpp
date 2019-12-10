@@ -1,16 +1,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <cstdio>
-
-int getData(uint8_t *packet, size_t index)
-{
-    return (int)packet[index] << 8 | (int)packet[index + 1];
-}
-void writeData(uint8_t *packet, size_t index, int x)
-{
-    packet[index] = x >> 8;
-    packet[index + 1] = x & (1 << 8) - 1;
-}
+#include "utility.h"
 
 /**
  * @brief 进行转发时所需的 IP 头的更新：
