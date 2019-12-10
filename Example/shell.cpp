@@ -19,7 +19,7 @@ uint8_t packet[2048];
 bool cont = false;
 
 // 10.0.0.1 ~ 10.0.3.1
-in_addr_t addrs[N_IFACE_ON_BOARD];
+in_addr_t addrs[N_IFACE_ON_BOARD] = {0x0101010a};
 
 void interrupt(int _) {
   printf("Interrupt\n");
@@ -29,8 +29,8 @@ void interrupt(int _) {
 
 int main() {
   // Initialize [addrs]
-  for (int i = 0; i < N_IFACE_ON_BOARD; ++i)
-    addrs[i] = 0x0100000a + 0x10000 * i;
+//   for (int i = 0; i < N_IFACE_ON_BOARD; ++i)
+//     addrs[i] = 0x0100000a + 0x10000 * i;
 
   printf("HAL init: %d\n", HAL_Init(1, addrs));
   for (int i = 0; i < N_IFACE_ON_BOARD;i++) {

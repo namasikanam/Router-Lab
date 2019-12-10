@@ -54,7 +54,7 @@ int main(int argc, char *argv[]) {
   while (1) {
     uint64_t time = HAL_GetTicks();
     if (time > last_time + 30 * 1000) {
-      // What to do?
+      // TODO:
       // send complete routing table to every interface
       // ref. RFC2453 3.8
       // multicast MAC for 224.0.0.9 is 01:00:5e:00:00:09
@@ -86,7 +86,7 @@ int main(int argc, char *argv[]) {
       continue;
     }
     in_addr_t src_addr, dst_addr;
-    // extract src_addr and dst_addr from packet
+    // TODO: extract src_addr and dst_addr from packet
     // big endian
 
     // 2. check whether dst is me
@@ -97,7 +97,8 @@ int main(int argc, char *argv[]) {
         break;
       }
     }
-    // TODO: Handle rip multicast address(224.0.0.9)?
+    // DONE: Handle rip multicast address(224.0.0.9)?
+    if (dst_addr == (9u << 24 | 224)) dst_is_me = true;
 
     if (dst_is_me) {
       // 3a.1
