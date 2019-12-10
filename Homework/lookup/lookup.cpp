@@ -1,6 +1,15 @@
 #include "router.h"
 #include <stdint.h>
 #include <stdlib.h>
+#include <bits/stdc++.h>
+#include <arpa/inet.h>
+using namespace std;
+
+void output(uint32_t x)
+{
+    for (int i = 32; i--;)
+        putchar('0' ^ x >> i & 1);
+}
 
 /*
   RoutingTable Entry 的定义如下：
@@ -18,6 +27,13 @@
   你可以在全局变量中把路由表以一定的数据结构格式保存下来。
 */
 
+map<pair<uint32_t, int>, pair<uint32_t, uint32_t>> table;
+uint32_t calc(uint32_t addr, int len)
+{
+    // return len == 32 ? htonl(addr) : htonl(addr) & (1 << len) - 1;
+    return htonl(addr) >> 32 - len;
+}
+
 /**
  * @brief 插入/删除一条路由表表项
  * @param insert 如果要插入则为 true ，要删除则为 false
@@ -26,8 +42,20 @@
  * 插入时如果已经存在一条 addr 和 len 都相同的表项，则替换掉原有的。
  * 删除时按照 addr 和 len 匹配。
  */
-void update(bool insert, RoutingTableEntry entry) {
-  // TODO:
+void update(bool insert, RoutingTableEntry entry)
+{
+    if (insert)
+    {
+        // printf("insert (addr = ");
+        // output(htonl(entry.addr));
+        // printf("(");
+        // output(htonl(entry.addr) & (1 << entry.len) - 1);
+        // printf("), len = %d)\n", entry.len);
+
+        table[make_pair(calc(entry.addr, entry.len), entry.len)] = make_pair(entry.nexthop, entry.if_index);
+    }
+    else
+        table.erase(make_pair(calc(entry.addr, entry.len), entry.len));
 }
 
 /**
@@ -37,9 +65,23 @@ void update(bool insert, RoutingTableEntry entry) {
  * @param if_index 如果查询到目标，把表项的 if_index 写入
  * @return 查到则返回 true ，没查到则返回 false
  */
-bool query(uint32_t addr, uint32_t *nexthop, uint32_t *if_index) {
-  // TODO:
-  *nexthop = 0;
-  *if_index = 0;
-  return false;
+bool query(uint32_t addr, uint32_t *nexthop, uint32_t *if_index)
+{
+    for (int i = 32; i >= 0; --i)
+    {
+        auto it = table.find(make_pair(calc(addr, i), i));
+        if (it != table.end())
+        {
+            // printf("Find ");
+            // output(addr);
+            // printf("(");
+            // output(addr & (1 << i) - 1);
+            // printf(") at %d\n", i);
+
+            *nexthop = ((it->second).first);
+            *if_index = ((it->second).second);
+            return true;
+        }
+    }
+    return false;
 }

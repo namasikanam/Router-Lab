@@ -1,5 +1,16 @@
 #include <stdint.h>
 #include <stdlib.h>
+#include <cstdio>
+
+int getData(uint8_t *packet, size_t index)
+{
+    return (int)packet[index] << 8 | (int)packet[index + 1];
+}
+void writeData(uint8_t *packet, size_t index, int x)
+{
+    packet[index] = x >> 8;
+    packet[index + 1] = x & (1 << 8) - 1;
+}
 
 /**
  * @brief 进行转发时所需的 IP 头的更新：
@@ -10,7 +21,37 @@
  * @param len 即 packet 的长度，单位为字节
  * @return 校验和无误则返回 true ，有误则返回 false
  */
-bool forward(uint8_t *packet, size_t len) {
-  // TODO:
-  return false;
+bool forward(uint8_t *packet, size_t len)
+{
+    int n = (packet[0] & (1 << 4) - 1) << 2;
+
+    int x = 0;
+    for (int i = 0; i < n; i += 2)
+        if (i != 10)
+            x += getData(packet, i);
+    while (x >= 1 << 16)
+        x = (x & (1 << 16) - 1) + (x >> 16);
+    x = ~x & (1 << 16) - 1;
+
+    // for (int i = 16; i--;)
+    //     printf("%d", x >> i & 1);
+    // puts("");
+    // for (int i = 16; i--;)
+    //     printf("%d", getData(packet, 10) >> i & 1);
+    // puts("");
+
+    if (x != getData(packet, 10))
+        return false;
+
+    --packet[8];
+    x = 0;
+    for (int i = 0; i < n; i += 2)
+        if (i != 10)
+            x += getData(packet, i);
+    while (x >= 1 << 16)
+        x = (x & (1 << 16) - 1) + (x >> 16);
+    x = ~x & (1 << 16) - 1;
+    writeData(packet, 10, x);
+
+    return true;
 }

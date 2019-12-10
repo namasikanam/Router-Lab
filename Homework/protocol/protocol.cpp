@@ -1,6 +1,15 @@
 #include "rip.h"
 #include <stdint.h>
 #include <stdlib.h>
+#include <arpa/inet.h>
+#include <bits/stdc++.h>
+using namespace std;
+
+void out(unsigned x, int n)
+{
+    while (n--)
+        putchar('0' ^ x >> n & 1);
+}
 
 /*
   在头文件 rip.h 中定义了如下的结构体：
@@ -29,6 +38,11 @@
   需要注意这里的地址都是用 **大端序** 存储的，1.2.3.4 对应 0x04030201 。
 */
 
+int getData(const uint8_t *packet, size_t index)
+{
+    return (int)packet[index] << 8 | (int)packet[index + 1];
+}
+
 /**
  * @brief 从接受到的 IP 包解析出 Rip 协议的数据
  * @param packet 接受到的 IP 包
@@ -43,9 +57,96 @@
  * Metric 转换成小端序后是否在 [1,16] 的区间内，
  * Mask 的二进制是不是连续的 1 与连续的 0 组成等等。
  */
-bool disassemble(const uint8_t *packet, uint32_t len, RipPacket *output) {
-  // TODO:
-  return false;
+bool disassemble(const uint8_t *packet, uint32_t len, RipPacket *output)
+{
+    // for (int i = 0; i < len; ++i)
+    // {
+    //     printf("%02x(%d)", packet[i], i);
+    //     putchar(i % 16 == 15 ? '\n' : ' ');
+    // }
+    // puts("");
+
+    int totalLength = getData(packet, 2);
+
+    // printf("totalLength = %d\n", totalLength);
+
+    if (totalLength > len)
+    {
+        // printf("[len] is not enough.\n");
+        return false;
+    }
+    RipPacket &ripPacket = *output;
+    ripPacket.command = packet[28];
+    int version = packet[29];
+    int zero = *(uint16_t *)(packet + 30);
+    if (!(ripPacket.command == 1 || ripPacket.command == 2))
+    {
+        // printf("invalid command: ");
+        // out(ripPacket.command, 8);
+        // printf(".\n");
+        return false;
+    }
+    if (!(version == 2))
+    {
+        // printf("invalid version.\n");
+        return false;
+    }
+    if (!(zero == 0))
+    {
+        // printf("invalid zero.\n");
+        return false;
+    }
+    ripPacket.numEntries = 0;
+    for (int rip_start = 32; rip_start < totalLength; rip_start += 20)
+    {
+        RipEntry &ripEntry = ripPacket.entries[ripPacket.numEntries++];
+        ripEntry.addr = *(uint32_t *)(packet + rip_start + 4);
+        ripEntry.mask = *(uint32_t *)(packet + rip_start + 8);
+        ripEntry.nexthop = *(uint32_t *)(packet + rip_start + 12);
+        ripEntry.metric = *(uint32_t *)(packet + rip_start + 16);
+
+        int family = packet[rip_start + 1];
+
+        if (!(ripPacket.command == 1 && family == 0 || ripPacket.command == 2 && family == 2))
+        {
+            // printf("invalid command: command = %d, family = %d(", ripPacket.command, family);
+            // out(family, 16);
+            // printf(")\n");
+            return false;
+        }
+        if (!(*(uint16_t *)(packet + rip_start + 2) == 0))
+        { // Tag
+            // printf("invalid tag.\n");
+            return false;
+        }
+        if (!(htonl(ripEntry.metric) >= 1 && htonl(ripEntry.metric) <= 16))
+        { // metric
+            // printf("invalid metric.\n");
+            return false;
+        }
+        if (![ripEntry]() {
+                if (htonl(ripEntry.mask) == 0)
+                    return true;
+                for (int i = 0; i < 32; ++i)
+                    if (htonl(ripEntry.mask) == ~((1 << i) - 1))
+                        return true;
+                return false;
+            }())
+        {
+            // printf("invalid mask: ");
+            // out(htonl(ripEntry.mask), 32);
+            // printf("\n");
+            // out((1 << 24) - 1, 32);
+            // puts("");
+            return false;
+        }
+    }
+
+    // printf("numEntries = %d\n", ripPacket.numEntries);
+
+    // cout << "output = " << output << endl;
+
+    return true;
 }
 
 /**
@@ -58,7 +159,27 @@ bool disassemble(const uint8_t *packet, uint32_t len, RipPacket *output) {
  * 你写入 buffer 的数据长度和返回值都应该是四个字节的 RIP 头，加上每项 20 字节。
  * 需要注意一些没有保存在 RipPacket 结构体内的数据的填写。
  */
-uint32_t assemble(const RipPacket *rip, uint8_t *buffer) {
-  // TODO:
-  return 0;
+uint32_t assemble(const RipPacket *rip, uint8_t *buffer)
+{
+    // cout << "rip = " << rip << endl;
+
+    buffer[0] = rip->command;
+    buffer[1] = 2;
+    buffer[2] = buffer[3] = 0;
+    buffer += 4;
+    for (int i = 0; i < rip->numEntries; ++i, buffer += 20)
+    {
+        RipEntry ripEntry = rip->entries[i];
+        *buffer = 0;
+        *(buffer + 1) = rip->command == 1 ? 0 : 2;     // Family
+        *(uint16_t *)(buffer + 2) = 0;                 // Route Tag = 0
+        *(uint32_t *)(buffer + 4) = ripEntry.addr;     // IPv4 Address
+        *(uint32_t *)(buffer + 8) = ripEntry.mask;     // Netmask
+        *(uint32_t *)(buffer + 12) = ripEntry.nexthop; // Next Hop
+        *(uint32_t *)(buffer + 16) = ripEntry.metric;  // Metric
+    }
+
+    // printf("numEntries = %d\n", rip->numEntries);
+
+    return 4 + rip->numEntries * 20;
 }

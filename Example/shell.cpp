@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <inttypes.h>
 
 void printMAC(macaddr_t mac) {
   printf("%02X:%02X:%02X:%02X:%02X:%02X", mac[0], mac[1], mac[2], mac[3],
@@ -18,8 +19,7 @@ uint8_t packet[2048];
 bool cont = false;
 
 // 10.0.0.1 ~ 10.0.3.1
-in_addr_t addrs[N_IFACE_ON_BOARD] = {0x0100000a, 0x0101000a, 0x0102000a,
-                                    0x0103000a};
+in_addr_t addrs[N_IFACE_ON_BOARD];
 
 void interrupt(int _) {
   printf("Interrupt\n");
@@ -28,6 +28,10 @@ void interrupt(int _) {
 }
 
 int main() {
+  // Initialize [addrs]
+  for (int i = 0; i < N_IFACE_ON_BOARD; ++i)
+    addrs[i] = 0x0100000a + 0x10000 * i;
+
   printf("HAL init: %d\n", HAL_Init(1, addrs));
   for (int i = 0; i < N_IFACE_ON_BOARD;i++) {
     macaddr_t mac;
@@ -40,7 +44,7 @@ int main() {
   while ((buffer = readline("> "))) {
     add_history(buffer);
     if (strcmp(buffer, "time") == 0) {
-      printf("Current tick %lld\n", HAL_GetTicks());
+      printf("Current tick %" PRIu64 "\n", HAL_GetTicks());
     } else if (strncmp(buffer, "arp", strlen("arp")) == 0) {
       int if_index;
       int ip1, ip2, ip3, ip4;
