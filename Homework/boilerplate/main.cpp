@@ -146,7 +146,7 @@ int main(int argc, char *argv[]) {
       // 3a.1
       RipPacket rip;
 
-      printf("Receive an rip from ip %d\n", if_index);
+      printf("Receive an package from if %d\n", if_index);
 
       // check and validate
       if (disassemble(packet, res, &rip)) {
