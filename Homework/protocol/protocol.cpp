@@ -33,11 +33,6 @@ using namespace std;
   需要注意这里的地址都是用 **大端序** 存储的，1.2.3.4 对应 0x04030201 。
 */
 
-int getData(const uint8_t *packet, size_t index)
-{
-    return (int)packet[index] << 8 | (int)packet[index + 1];
-}
-
 /**
  * @brief 从接受到的 IP 包解析出 Rip 协议的数据
  * @param packet 接受到的 IP 包
@@ -54,20 +49,10 @@ int getData(const uint8_t *packet, size_t index)
  */
 bool disassemble(const uint8_t *packet, uint32_t len, RipPacket *output)
 {
-    // for (int i = 0; i < len; ++i)
-    // {
-    //     printf("%02x(%d)", packet[i], i);
-    //     putchar(i % 16 == 15 ? '\n' : ' ');
-    // }
-    // puts("");
-
     int totalLength = getData(packet, 2);
-
-    // printf("totalLength = %d\n", totalLength);
 
     if (totalLength > len)
     {
-        // printf("[len] is not enough.\n");
         return false;
     }
     RipPacket &ripPacket = *output;
@@ -76,19 +61,14 @@ bool disassemble(const uint8_t *packet, uint32_t len, RipPacket *output)
     int zero = *(uint16_t *)(packet + 30);
     if (!(ripPacket.command == 1 || ripPacket.command == 2))
     {
-        // printf("invalid command: ");
-        // out(ripPacket.command, 8);
-        // printf(".\n");
         return false;
     }
     if (!(version == 2))
     {
-        // printf("invalid version.\n");
         return false;
     }
     if (!(zero == 0))
     {
-        // printf("invalid zero.\n");
         return false;
     }
     ripPacket.numEntries = 0;
@@ -104,19 +84,14 @@ bool disassemble(const uint8_t *packet, uint32_t len, RipPacket *output)
 
         if (!(ripPacket.command == 1 && family == 0 || ripPacket.command == 2 && family == 2))
         {
-            // printf("invalid command: command = %d, family = %d(", ripPacket.command, family);
-            // out(family, 16);
-            // printf(")\n");
             return false;
         }
         if (!(*(uint16_t *)(packet + rip_start + 2) == 0))
         { // Tag
-            // printf("invalid tag.\n");
             return false;
         }
         if (!(htonl(ripEntry.metric) >= 1 && htonl(ripEntry.metric) <= 16))
         { // metric
-            // printf("invalid metric.\n");
             return false;
         }
         if (![ripEntry]() {
@@ -128,18 +103,9 @@ bool disassemble(const uint8_t *packet, uint32_t len, RipPacket *output)
                 return false;
             }())
         {
-            // printf("invalid mask: ");
-            // out(htonl(ripEntry.mask), 32);
-            // printf("\n");
-            // out((1 << 24) - 1, 32);
-            // puts("");
             return false;
         }
     }
-
-    // printf("numEntries = %d\n", ripPacket.numEntries);
-
-    // cout << "output = " << output << endl;
 
     return true;
 }
@@ -156,12 +122,11 @@ bool disassemble(const uint8_t *packet, uint32_t len, RipPacket *output)
  */
 uint32_t assemble(const RipPacket *rip, uint8_t *buffer)
 {
-    // cout << "rip = " << rip << endl;
-
-    buffer[0] = rip->command;
-    buffer[1] = 2;
+    buffer[0] = rip->command; // command: request (0x01) or response (0x02)
+    buffer[1] = 2; // version
     buffer[2] = buffer[3] = 0;
     buffer += 4;
+    // TODO: Perhaps need to check the command.
     for (int i = 0; i < rip->numEntries; ++i, buffer += 20)
     {
         RipEntry ripEntry = rip->entries[i];
@@ -173,8 +138,6 @@ uint32_t assemble(const RipPacket *rip, uint8_t *buffer)
         *(uint32_t *)(buffer + 12) = ripEntry.nexthop; // Next Hop
         *(uint32_t *)(buffer + 16) = ripEntry.metric;  // Metric
     }
-
-    // printf("numEntries = %d\n", rip->numEntries);
 
     return 4 + rip->numEntries * 20;
 }

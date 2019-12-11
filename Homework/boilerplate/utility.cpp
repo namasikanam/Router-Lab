@@ -3,7 +3,7 @@
 #include <cstdio>
 #include "utility.h"
 
-int getData(uint8_t *packet, size_t index)
+int getData(const uint8_t *packet, size_t index)
 {
     return (int)packet[index] << 8 | (int)packet[index + 1];
 }
@@ -32,4 +32,22 @@ void output(uint32_t x)
 {
     for (int i = 32; i--;)
         putchar('0' ^ x >> i & 1);
+}
+
+uint32_t calc(uint32_t addr, int len)
+{
+    return htonl(addr) >> 32 - len;
+}
+
+uint16_t IPChecksum(uint8_t *packet, size_t len) {
+    uint32_t n = (packet[0] & (1 << 4) - 1) << 2;
+
+    uint32_t x = 0;
+    for (uint32_t i = 0; i < n; i += 2)
+        if (i != 10)
+            x += getData(packet, i);
+    while (x >= 1 << 16)
+        x = (x & (1 << 16) - 1) + (x >> 16);
+    
+    return ~x & (1 << 16) - 1;
 }

@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <bits/stdc++.h>
+#include <tuple>
 #include <arpa/inet.h>
 #include "utility.h"
 using namespace std;
@@ -13,6 +14,7 @@ using namespace std;
     uint32_t len; // 小端序，前缀长度
     uint32_t if_index; // 小端序，出端口编号
     uint32_t nexthop; // 大端序，下一跳的 IPv4 地址
+    uint32_t metric; // 小端序，值域为[1, 16].
   } RoutingTableEntry;
 
   约定 addr 和 nexthop 以 **大端序** 存储。
@@ -22,35 +24,34 @@ using namespace std;
   你可以在全局变量中把路由表以一定的数据结构格式保存下来。
 */
 
-map<pair<uint32_t, int>, pair<uint32_t, uint32_t>> table;
-uint32_t calc(uint32_t addr, int len)
-{
-    // return len == 32 ? htonl(addr) : htonl(addr) & (1 << len) - 1;
-    return htonl(addr) >> 32 - len;
-}
+// key: <addr, len>, value: <if_index, nexthop, metric>
+map<pair<uint32_t, uint32_t>, tuple<uint32_t, uint32_t, uint32_t>> table;
 
 /**
  * @brief 插入/删除一条路由表表项
  * @param insert 如果要插入则为 true ，要删除则为 false
  * @param entry 要插入/删除的表项
+ * @param return 路由表的结构是否发生改变
  * 
  * 插入时如果已经存在一条 addr 和 len 都相同的表项，则替换掉原有的。
  * 删除时按照 addr 和 len 匹配。
  */
-void update(bool insert, RoutingTableEntry entry)
+bool update(bool insert, RoutingTableEntry entry)
 {
-    if (insert)
-    {
-        // printf("insert (addr = ");
-        // output(htonl(entry.addr));
-        // printf("(");
-        // output(htonl(entry.addr) & (1 << entry.len) - 1);
-        // printf("), len = %d)\n", entry.len);
-
-        table[make_pair(calc(entry.addr, entry.len), entry.len)] = make_pair(entry.nexthop, entry.if_index);
+    auto key = make_pair(calc(entry.addr, entry.len), entry.len);
+    if (table.find(key) != table.end()) {
+        if (insert) {
+            if (entry.metric < get<2>(table[key])) {
+                table[key] = make_tuple(entry.nexthop, entry.if_index, entry.metric);
+                return true;
+            }
+        }
+        else {
+            table.erase(key);
+            return true;
+        }
     }
-    else
-        table.erase(make_pair(calc(entry.addr, entry.len), entry.len));
+    return false;
 }
 
 /**
@@ -67,16 +68,32 @@ bool query(uint32_t addr, uint32_t *nexthop, uint32_t *if_index)
         auto it = table.find(make_pair(calc(addr, i), i));
         if (it != table.end())
         {
-            // printf("Find ");
-            // output(addr);
-            // printf("(");
-            // output(addr & (1 << i) - 1);
-            // printf(") at %d\n", i);
-
-            *nexthop = ((it->second).first);
-            *if_index = ((it->second).second);
+            *nexthop = get<0>(it->second);
+            *if_index = get<1>(it->second);
             return true;
         }
     }
     return false;
+}
+
+// The interface to send is always needed to consider.
+// I'm not sure if this satisfies RFC,
+// but it seems reasonable to me.
+RipPacket *routingTable(int if_index) {
+  RipPacket *p = new RipPacket();
+  p->command = 0x2; // Command Response
+  p->numEntries = 0;
+  for (auto it = table.first(); it != table.end() ; ++it) {
+    if (if_index != get<0>(it->value)) {
+        p->entries[numEntries++] = {
+        // The format of the routing entry
+        // key: <addr, len>, value: <if_index, nexthop, metric>
+        .addr = (it->key).first,
+        .mask = (it->key).second == 0 ? 0: htonl(~((1 << 32 - (it->key).second) - 1)),
+        .nexthop = get<1>(it->value),
+        .metric = min(get<2>(it->value) + 1, 16)
+        };
+    }
+  }
+  return p;
 }
