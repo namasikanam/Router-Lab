@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <cstdio>
+#include <arpa/inet.h>
 #include "utility.h"
 
 int getData(const uint8_t *packet, size_t index)
@@ -39,7 +40,7 @@ uint32_t calc(uint32_t addr, int len)
     return htonl(addr) >> 32 - len;
 }
 
-uint16_t IPChecksum(uint8_t *packet, size_t len) {
+uint16_t IPChecksum(uint8_t *packet) {
     uint32_t n = (packet[0] & (1 << 4) - 1) << 2;
 
     uint32_t x = 0;

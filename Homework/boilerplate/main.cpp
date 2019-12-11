@@ -13,8 +13,9 @@ extern bool query(uint32_t addr, uint32_t *nexthop, uint32_t *if_index);
 extern bool forward(uint8_t *packet, size_t len);
 extern bool disassemble(const uint8_t *packet, uint32_t len, RipPacket *output);
 extern uint32_t assemble(const RipPacket *rip, uint8_t *buffer);
-// A new function is added here for convenience
-extern RipPacket *routingTable(int if_index);
+// Some new functions are added here for convenience
+extern RipPacket routingTable(uint32_t if_index);
+extern void outputTable();
 
 uint8_t packet[2048];
 uint8_t output[2048];
@@ -26,8 +27,8 @@ uint8_t output[2048];
 // 你可以按需进行修改，注意端序
 in_addr_t addrs[N_IFACE_ON_BOARD];
 
-uint32_t packetAssemble(RipPacket *rip, uint32_t srcIP, uint32_t dstIP) {
-    uint32_t len = assemble(rip, output+20+8);
+uint32_t packetAssemble(RipPacket rip, uint32_t srcIP, uint32_t dstIP) {
+    uint32_t len = assemble(&rip, output+20+8);
 
     // UDP
     *(uint16_t *)(output+20) = htons(520); // src port: 520
@@ -91,8 +92,7 @@ int main(int argc, char *argv[]) {
       static uint32_t multicastingIP = 0x090000e0;
       static macaddr_t multicastingMAC = {0x01, 0x00, 0x5e, 0x00, 0x00, 0x09};
       for (uint32_t i = 0; i < N_IFACE_ON_BOARD; ++i) {
-        HAL_SendIPPacket(i, output, packetAssemble(routingTable, addrs[i], multicastingIP), multicastingMAC);
-        out_len -= 20;
+        HAL_SendIPPacket(i, output, packetAssemble(routingTable(i), addrs[i], multicastingIP), multicastingMAC);
       }
 
       printf("30s Timer: RIP Broadcasting\n");
@@ -116,6 +116,9 @@ int main(int argc, char *argv[]) {
       // packet is truncated, ignore it
       continue;
     }
+
+    // Output routing table
+    outputTable();
 
     // 1. validate
     if (!validateIPChecksum(packet, res)) {
@@ -163,12 +166,9 @@ int main(int argc, char *argv[]) {
 
           printf("RIP Response %d\n", rip.numEntries);
 
-          RipPacket *p = new RipPacket();
-          p->command = 0x2;
-          p->numEntries = 0;
           for (int i = 0; i < rip.numEntries; i++) {
             if (rip.entries[i].metric < 16) { // TODO: Poison reverse
-              RoutingTableEntry record = RoutingTableEntry {
+              update(true, RoutingTableEntry {
               .addr = rip.entries[i].addr,
               .len = [](uint32_t mask) -> uint32_t{
                 mask = htonl(mask);
@@ -176,23 +176,14 @@ int main(int argc, char *argv[]) {
                     if (mask << i == 0)
                         return i;
               }(rip.entries[i].mask),
-              .if_index = if_index,
+              .if_index = (uint32_t)if_index,
               .nexthop = rip.entries[i].nexthop,
               .metric = rip.entries[i].metric
-              }
-              if (update(true, record)) {
-                p->entries[p->numEntries++] = {
-                .addr = record.addr & len_to_mask(record.len),
-                .mask = len_to_mask(record.len),
-                .nexthop = record.nexthop,
-                .metric = 16
-                };
-              }
+              });
             }
           }
 
           // triggered updates? ref. RFC2453 3.10.1
-          printf("Trigger " PRIu32 " update(s), no response for simplicity.\n", p->numEntries);
         }
       }
     } else {

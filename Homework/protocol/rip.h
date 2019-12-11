@@ -1,3 +1,6 @@
+#ifndef __RIP_H__
+#define __RIP_H__
+
 #include <stdint.h>
 #define RIP_MAX_ENTRY 25
 typedef struct {
@@ -18,3 +21,5 @@ typedef struct {
   // we don't store 'zero', as it is always 0
   RipEntry entries[RIP_MAX_ENTRY];
 } RipPacket;
+
+#endif

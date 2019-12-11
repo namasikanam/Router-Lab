@@ -5,6 +5,7 @@
 #include <tuple>
 #include <arpa/inet.h>
 #include "utility.h"
+#include "rip.h"
 using namespace std;
 
 /*
@@ -79,21 +80,29 @@ bool query(uint32_t addr, uint32_t *nexthop, uint32_t *if_index)
 // The interface to send is always needed to consider.
 // I'm not sure if this satisfies RFC,
 // but it seems reasonable to me.
-RipPacket *routingTable(int if_index) {
-  RipPacket *p = new RipPacket();
-  p->command = 0x2; // Command Response
-  p->numEntries = 0;
-  for (auto it = table.first(); it != table.end() ; ++it) {
-    if (if_index != get<0>(it->value)) {
-        p->entries[numEntries++] = {
+RipPacket routingTable(uint32_t if_index) {
+  RipPacket p = RipPacket();
+  p.command = 0x2; // Command Response
+  p.numEntries = 0;
+  for (auto it = table.begin(); it != table.end(); ++it) {
+    if (if_index != get<0>(it->second)) {
+        p.entries[p.numEntries++] = {
         // The format of the routing entry
         // key: <addr, len>, value: <if_index, nexthop, metric>
-        .addr = (it->key).first,
-        .mask = (it->key).second == 0 ? 0: htonl(~((1 << 32 - (it->key).second) - 1)),
-        .nexthop = get<1>(it->value),
-        .metric = min(get<2>(it->value) + 1, 16)
+        .addr = (it->first).first,
+        .mask = (it->first).second == 0 ? 0: htonl(~((1 << 32 - (it->first).second) - 1)),
+        .nexthop = get<1>(it->second),
+        .metric = min(get<2>(it->second) + 1, 16u)
         };
     }
   }
   return p;
+}
+
+void outputTable() {
+    printf("====== Start to output routing table. ======\n");
+    for (auto it = table.begin(); it != table.end(); ++it) {
+        printf("{addr = %" PRIu32 ", len = %" PRIu32 ", if_index = %" PRIu32 ", nexthop = %" PRIu32 ", metric = %" PRIu32 "}\n", it->first.first, it->first.second, get<0>(it->second), get<1>(it->second), get<2>(it->second));
+    }
+    printf("====== Routing table is all output. ========\n");
 }
