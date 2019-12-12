@@ -316,6 +316,8 @@ int HAL_ReceiveIPPacket(int if_index_mask, uint8_t *buffer, size_t length,
 
 int HAL_SendIPPacket(int if_index, uint8_t *buffer, size_t length,
                      macaddr_t dst_mac) {
+  printf("HAL_SendIPPacket(if_index = %d, buffer = _, length = %d, dst_mac = _\n", if_index, length);
+
   if (!inited) {
     return HAL_ERR_CALLED_BEFORE_INIT;
   }

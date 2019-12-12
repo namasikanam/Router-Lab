@@ -37,7 +37,7 @@ void output(uint32_t x)
 
 uint32_t calc(uint32_t addr, int len)
 {
-    return htonl(addr) >> 32 - len;
+    return htonl((ntohl(addr) >> 32 - len) << 32 - len);
 }
 
 uint16_t IPChecksum(uint8_t *packet) {

@@ -1,0 +1,69 @@
+ INFO: nweb starting:80:29036
+ INFO: nweb starting:80:29047
+ERROR: system call:bind Errno=98 exiting pid=29047
+FORBIDDEN: failed to read browser request:
+ INFO: nweb starting:80:29092
+ERROR: system call:bind Errno=98 exiting pid=29092
+ INFO: nweb starting:80:29102
+ INFO: request:GET http://www.baidu.com/cache/global/img/gs.gif HTTP/1.1**Host: www.baidu.com**User-Agent: Mozilla**If-Modified-Since: Thu, 19 Apr 2012 09:51:20 GMT****:2
+NOT FOUND: failed to open file:ttp://www.baidu.com/cache/global/img/gs.gif
+ INFO: request:GET / HTTP/1.1**Host: 112.126.99.208:80**User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36**Content-Length: 0****:3
+NOT FOUND: failed to open file:index.html
+ INFO: request:GET / HTTP/1.1**Host: 112.126.99.208:80**User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36**Content-Length: 0****:4
+NOT FOUND: failed to open file:index.html
+ INFO: request:GET / HTTP/1.1**Host: 112.126.99.208**User-Agent: Mozilla/5.0 zgrab/0.x**Accept: */***Accept-Encoding: gzip****:5
+NOT FOUND: failed to open file:index.html
+ INFO: request:GET / HTTP/1.1**Host: 112.126.99.208:80**User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/601.7.7 (KHTML, like Gecko) Version/9.1.2 Safari/601.7.7**Content-Length: 0****:6
+NOT FOUND: failed to open file:index.html
+ INFO: request:GET / HTTP/1.1**User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:36.0) Gecko/20100101 Firefox/36.0**Host: 112.126.99.208**Connection: Keep-Alive**Accept-Encoding: gzip****:7
+NOT FOUND: failed to open file:index.html
+ INFO: request::8
+FORBIDDEN: Only simple GET operation supported:
+ INFO: request:GET / HTTP/1.1**Host: 112.126.99.208**User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.133 Safari/537.36**Accept: */***Accept-Encoding: gzip****:9
+NOT FOUND: failed to open file:index.html
+FORBIDDEN: failed to read browser request:
+ INFO: request:GET / HTTP/1.1**host: 112.126.99.208****:11
+NOT FOUND: failed to open file:index.html
+ INFO: request:GET / HTTP/1.1**Host: 112.126.99.208**User-Agent: Mozilla/5.0 zgrab/0.x**Accept: */***Accept-Encoding: gzip****:12
+NOT FOUND: failed to open file:index.html
+FORBIDDEN: failed to read browser request:
+ INFO: request:GET / HTTP/1.1**Host: 112.126.99.208:80**User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2743.116 Safari/537.36**Content-Length: 0****:14
+NOT FOUND: failed to open file:index.html
+ INFO: request:GET / HTTP/1.1**Host: 112.126.99.208:80**User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36**Content-Length: 0****:15
+NOT FOUND: failed to open file:index.html
+ INFO: request:GET / HTTP/1.1**Host: 112.126.99.208:80**User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36**Content-Length: 0****:16
+NOT FOUND: failed to open file:index.html
+ INFO: request:GET / HTTP/1.1**Host: 112.126.99.208:80**User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.11; rv:47.0) Gecko/20100101 Firefox/47.0**Accept: */***Connection: keep-alive****:17
+NOT FOUND: failed to open file:index.html
+ INFO: request:GET /w00tw00t.at.blackhats.romanian.anti-sec:) HTTP/1.1**Accept: */***Accept-Language: en-us**Accept-Encoding: gzip, deflate**User-Agent: ZmEu**Host: 112.126.99.208**Connection: Close****:18
+FORBIDDEN: file extension type not supported:GET /w00tw00t.at.blackhats.romanian.anti-sec:)
+ INFO: request:GET /phpMyAdmin/scripts/setup.php HTTP/1.1**Accept: */***Accept-Language: en-us**Accept-Encoding: gzip, deflate**User-Agent: ZmEu**Host: 112.126.99.208**Connection: Close****:19
+FORBIDDEN: file extension type not supported:GET /phpMyAdmin/scripts/setup.php
+ INFO: request:GET /pma/scripts/setup.php HTTP/1.1**Accept: */***Accept-Language: en-us**Accept-Encoding: gzip, deflate**User-Agent: ZmEu**Host: 112.126.99.208**Connection: Close****:20
+FORBIDDEN: file extension type not supported:GET /pma/scripts/setup.php
+ INFO: request:GET /myadmin/scripts/setup.php HTTP/1.1**Accept: */***Accept-Language: en-us**Accept-Encoding: gzip, deflate**User-Agent: ZmEu**Host: 112.126.99.208**Connection: Close****:21
+FORBIDDEN: file extension type not supported:GET /myadmin/scripts/setup.php
+ INFO: request:GET /MyAdmin/scripts/setup.php HTTP/1.1**Accept: */***Accept-Language: en-us**Accept-Encoding: gzip, deflate**User-Agent: ZmEu**Host: 112.126.99.208**Connection: Close****:22
+FORBIDDEN: file extension type not supported:GET /MyAdmin/scripts/setup.php
+FORBIDDEN: failed to read browser request:
+ INFO: request:GET / HTTP/1.1**Host: 112.126.99.208:80**User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2743.116 Safari/537.36**Content-Length: 0****:24
+NOT FOUND: failed to open file:index.html
+ INFO: request:GET / HTTP/1.1**Host: 112.126.99.208**User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36 **Accept: */***Accept-Encoding: gzip****:25
+NOT FOUND: failed to open file:index.html
+ INFO: request:GET http://clientapi.ipip.net/echo.php?info=1234567890 HTTP/1.1**Host: clientapi.ipip.net**User-Agent: Go-http-client/1.1**Connection: close****:26
+FORBIDDEN: file extension type not supported:GET http://clientapi.ipip.net/echo.php?info=1234567890
+ INFO: request:GET / HTTP/1.1**Host: 112.126.99.208:80**User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2743.116 Safari/537.36**Content-Length: 0****:27
+NOT FOUND: failed to open file:index.html
+ INFO: request:GET / HTTP/1.1**Host: 112.126.99.208:80**User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36**Content-Length: 0****:28
+NOT FOUND: failed to open file:index.html
+FORBIDDEN: failed to read browser request:
+ INFO: request:GET / HTTP/1.1**Host: 112.126.99.208**User-Agent: Mozilla/5.0 zgrab/0.x**Accept: */***Accept-Encoding: gzip****:30
+NOT FOUND: failed to open file:index.html
+ INFO: request:GET / HTTP/1.1**Host: 112.126.99.208**User-Agent: Mozilla/5.0 zgrab/0.x**Accept: */***Accept-Encoding: gzip****:31
+NOT FOUND: failed to open file:index.html
+ INFO: request:GET / HTTP/1.1**Host: 112.126.99.208**User-Agent: Mozilla/5.0 zgrab/0.x**Accept: */***Accept-Encoding: gzip****:32
+NOT FOUND: failed to open file:index.html
+ INFO: request:GET / HTTP/1.1**Host: 112.126.99.208**User-Agent: Mozilla/5.0 zgrab/0.x**Accept: */***Accept-Encoding: gzip****:33
+NOT FOUND: failed to open file:index.html
+ INFO: request:GET / HTTP/1.1**Host: 112.126.99.208**User-Agent: Mozilla/5.0 zgrab/0.x**Accept: */***Accept-Encoding: gzip****:34
+NOT FOUND: failed to open file:index.html

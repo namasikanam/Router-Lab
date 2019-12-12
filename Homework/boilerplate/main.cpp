@@ -6,6 +6,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include "utility.h"
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 extern bool validateIPChecksum(uint8_t *packet, size_t len);
 extern bool update(bool insert, RoutingTableEntry entry);
@@ -24,8 +27,13 @@ uint8_t output[2048];
 // 2: 10.0.2.1
 // 3: 10.0.3.1
 // 子网地址
-// 你可以按需进行修改，注意端序
-in_addr_t addrs[N_IFACE_ON_BOARD];
+// 你可以按需进行修改，注意端序是大端序
+in_addr_t addrs[N_IFACE_ON_BOARD] = {
+    inet_addr("192.168.3.2"),
+    inet_addr("192.168.4.1"),
+    inet_addr("10.0.2.1"),
+    inet_addr("10.0.3.1"),
+};
 
 uint32_t packetAssemble(RipPacket rip, uint32_t srcIP, uint32_t dstIP) {
     uint32_t len = assemble(&rip, output+20+8);
@@ -49,15 +57,15 @@ uint32_t packetAssemble(RipPacket rip, uint32_t srcIP, uint32_t dstIP) {
     *(uint8_t *)(output+9) = 0x11; // Protocol: UDP:0x11 TCP:0x06 ICMP:0x01
     *(uint32_t *)(output+12) = srcIP; // src ip 
     *(uint32_t *)(output+16) = dstIP; // dst ip
-    *(uint16_t *)(output+10) = IPChecksum(output); // checksum calculation for ip
+    *(uint16_t *)(output+10) = ntohs(IPChecksum(output)); // checksum calculation for ip
 
     return len;
 }
 
 int main(int argc, char *argv[]) {
-  // Initialize [addrs]
-  for (int i = 0; i < N_IFACE_ON_BOARD; ++i)
-    addrs[i] = 0x0100000a + 0x10000 * i;
+  printf("addrs = [");
+  for (int i = 0; i < N_IFACE_ON_BOARD; ++i) printf("%s, ", inet_ntoa(in_addr{addrs[i]}));
+  printf("]\n");
 
   // 0a.
   int res = HAL_Init(1, addrs);
@@ -71,31 +79,39 @@ int main(int argc, char *argv[]) {
   // 10.0.1.0/24 if 1
   // 10.0.2.0/24 if 2
   // 10.0.3.0/24 if 3
-  for (uint32_t i = 0; i < N_IFACE_ON_BOARD; i++) {
-    RoutingTableEntry entry = {
+  for (uint32_t i = 2; i < N_IFACE_ON_BOARD; i++) {
+    RoutingTableEntry entry = RoutingTableEntry{
         .addr = addrs[i] & 0x00FFFFFF, // big endian
         .len = 24,        // small endian
         .if_index = i,    // small endian
-        .nexthop = 0      // big endian, means direct
+        .nexthop = 0,      // big endian, means direct
+        .metric = 0x01000000,      // big endian
     };
+
+    printf("entry = ");
+    entry.print();
+    printf("\n");
+
     update(true, entry);
   }
 
   uint64_t last_time = 0;
   while (1) {
     uint64_t time = HAL_GetTicks();
-    // if (time > last_time + 30 * 1000) { // 30s for standard
-    if (time > last_time + 5 * 1000) { // 5s for test
+    if (time > last_time + 30 * 1000) { // 30s for standard
+      printf("Regular RIP Broadcasting every 30s.\n");
+    // if (time > last_time + 5 * 1000) { // 5s for test
+    //   printf("Regular RIP Broadcasting every 5s.\n");
+
       // send complete routing table to every interface
       // ref. RFC2453 3.8
       // multicast MAC for 224.0.0.9 is 01:00:5e:00:00:09
       static uint32_t multicastingIP = 0x090000e0;
       static macaddr_t multicastingMAC = {0x01, 0x00, 0x5e, 0x00, 0x00, 0x09};
       for (uint32_t i = 0; i < N_IFACE_ON_BOARD; ++i) {
-        HAL_SendIPPacket(i, output, packetAssemble(routingTable(i), addrs[i], multicastingIP), multicastingMAC);
+        size_t len = packetAssemble(routingTable(i), addrs[i], multicastingIP);
+        HAL_SendIPPacket(i, output, len, multicastingMAC);
       }
-
-      printf("30s Timer: RIP Broadcasting\n");
       last_time = time;
     }
 
@@ -116,9 +132,6 @@ int main(int argc, char *argv[]) {
       // packet is truncated, ignore it
       continue;
     }
-
-    // Output routing table
-    outputTable();
 
     // 1. validate
     if (!validateIPChecksum(packet, res)) {
@@ -167,8 +180,12 @@ int main(int argc, char *argv[]) {
           printf("RIP Response %d\n", rip.numEntries);
 
           for (int i = 0; i < rip.numEntries; i++) {
-            if (rip.entries[i].metric < 16) { // TODO: Poison reverse
-              update(true, RoutingTableEntry {
+            printf("rip.entries[%d] = ", i);
+            rip.entries[i].print();
+            printf("\n");
+
+            if (htonl(rip.entries[i].metric) < 16) { // TODO: Poison reverse
+              if (update(true, RoutingTableEntry {
               .addr = rip.entries[i].addr,
               .len = [](uint32_t mask) -> uint32_t{
                 mask = htonl(mask);
@@ -177,9 +194,11 @@ int main(int argc, char *argv[]) {
                         return i;
               }(rip.entries[i].mask),
               .if_index = (uint32_t)if_index,
-              .nexthop = rip.entries[i].nexthop,
+              .nexthop = src_addr,
               .metric = rip.entries[i].metric
-              });
+              })) {
+                outputTable();
+              }
             }
           }
 
@@ -217,7 +236,7 @@ int main(int argc, char *argv[]) {
         } else {
           // not found
           // you can drop it
-          printf("ARP not found for %x\n", nexthop);
+          printf("ARP not found for %s\n", inet_ntoa(in_addr{nexthop}));
         }
       } else {
         // not found

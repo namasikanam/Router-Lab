@@ -4,6 +4,7 @@
 #include <bits/stdc++.h>
 #include <tuple>
 #include <arpa/inet.h>
+#include <netinet/in.h>
 #include "utility.h"
 #include "rip.h"
 using namespace std;
@@ -15,7 +16,7 @@ using namespace std;
     uint32_t len; // 小端序，前缀长度
     uint32_t if_index; // 小端序，出端口编号
     uint32_t nexthop; // 大端序，下一跳的 IPv4 地址
-    uint32_t metric; // 小端序，值域为[1, 16].
+    uint32_t metric; // 大端序，值域为[1, 16].
   } RoutingTableEntry;
 
   约定 addr 和 nexthop 以 **大端序** 存储。
@@ -39,20 +40,45 @@ map<pair<uint32_t, uint32_t>, tuple<uint32_t, uint32_t, uint32_t>> table;
  */
 bool update(bool insert, RoutingTableEntry entry)
 {
+    printf("update with ");
+    entry.print();
+    printf("\n");
+
     auto key = make_pair(calc(entry.addr, entry.len), entry.len);
-    if (table.find(key) != table.end()) {
-        if (insert) {
-            if (entry.metric < get<2>(table[key])) {
-                table[key] = make_tuple(entry.nexthop, entry.if_index, entry.metric);
-                return true;
-            }
-        }
-        else {
-            table.erase(key);
+    if (insert) {
+        if (table.find(key) == table.end()) {
+            table[key] = make_tuple(entry.if_index, entry.nexthop, entry.metric);
+
+            printf("Success: Insert a new entry.\n");
+
+            return true;
+        } else if (entry.metric < get<2>(table[key])) { // The less relation preserves with nothing of endian choice
+            table[key] = make_tuple(entry.if_index, entry.nexthop, entry.metric);
+
+            printf("Success: Insert a closer entry.\n");
+
             return true;
         }
+        else {
+            printf("Failure: Insert a further entry.\n");
+
+            return false;
+        }
     }
-    return false;
+    else {
+        if (table.find(key) != table.end()) {
+            table.erase(key);
+
+            printf("Success: erase an existing entry.\n");
+
+            return true;
+        }
+        else {
+            printf("Failure: erase an non-existing entry.\n");
+
+            return false;
+        }
+    }
 }
 
 /**
@@ -69,8 +95,8 @@ bool query(uint32_t addr, uint32_t *nexthop, uint32_t *if_index)
         auto it = table.find(make_pair(calc(addr, i), i));
         if (it != table.end())
         {
-            *nexthop = get<0>(it->second);
-            *if_index = get<1>(it->second);
+            *if_index = get<0>(it->second);
+            *nexthop = get<1>(it->second);
             return true;
         }
     }
@@ -92,7 +118,7 @@ RipPacket routingTable(uint32_t if_index) {
         .addr = (it->first).first,
         .mask = (it->first).second == 0 ? 0: htonl(~((1 << 32 - (it->first).second) - 1)),
         .nexthop = get<1>(it->second),
-        .metric = min(get<2>(it->second) + 1, 16u)
+        .metric = htonl(min(ntohl(get<2>(it->second)) + 1, 16u))
         };
     }
   }
@@ -102,7 +128,12 @@ RipPacket routingTable(uint32_t if_index) {
 void outputTable() {
     printf("====== Start to output routing table. ======\n");
     for (auto it = table.begin(); it != table.end(); ++it) {
-        printf("{addr = %" PRIu32 ", len = %" PRIu32 ", if_index = %" PRIu32 ", nexthop = %" PRIu32 ", metric = %" PRIu32 "}\n", it->first.first, it->first.second, get<0>(it->second), get<1>(it->second), get<2>(it->second));
+        printf("RoutingTableEntry {addr = %s, len = %" PRIu32 ", if_index = %" PRIu32,
+            inet_ntoa(in_addr{it->first.first}),
+            it->first.second,
+            get<0>(it->second));
+        printf(", nexthop = %s", inet_ntoa(in_addr{get<1>(it->second)}));
+        printf(", metric = %s}\n", inet_ntoa(in_addr{get<2>(it->second)}));
     }
     printf("====== Routing table is all output. ========\n");
 }
